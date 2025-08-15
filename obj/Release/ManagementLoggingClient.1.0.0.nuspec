@@ -7,11 +7,15 @@
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <readme>README.md</readme>
-    <description>Biblioteca en .NET para la gestión centralizada de logs con AWS CloudWatch,
-      que soporta envío de mensajes estructurados en formato JSON,
-      registro de excepciones y eventos de aplicación,
-      y configuración flexible para distintos entornos.</description>
-    <repository type="git" />
+    <description>Biblioteca en .NET 8 para la gestión centralizada de logs con AWS CloudWatch, con soporte para mensajes JSON estructurados, registro de excepciones y configuración adaptable por entorno.</description>
+    <releaseNotes>Versión 1.0.0:
+    - Implementación inicial de la librería de logging para AWS CloudWatch.
+    - Soporte para envío de logs en formato JSON estructurado.
+    - Registro detallado de excepciones con metadatos clave.
+    - Configuración adaptable por entorno.
+    - Soporte adicional para almacenamiento local de logs.</releaseNotes>
+    <tags>logging cloudwatch aws json exceptions</tags>
+    <repository type="git" url="https://github.com/JhoanHurtado/LoggingClient.git" commit="af540674940bd83254bbdfe9881c1059348ffc11" />
     <dependencies>
       <group targetFramework="net8.0">
         <dependency id="AWSSDK.CloudWatchLogs" version="4.0.7.4" exclude="Build,Analyzers" />

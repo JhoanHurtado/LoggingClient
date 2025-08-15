@@ -1,21 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>ManagementLoggingClient</PackageId>
     <Version>1.0.0</Version>
     <Authors>Jhoan Hurtado</Authors>
-    <Nullable>enable</Nullable>
-    <Description>
-      Biblioteca en .NET para la gestión centralizada de logs con AWS CloudWatch,
-      que soporta envío de mensajes estructurados en formato JSON,
-      registro de excepciones y eventos de aplicación,
-      y configuración flexible para distintos entornos.
-    </Description>
-
+    <Company>JhoanHurtado</Company>
+    <Description>Biblioteca en .NET 8 para la gestión centralizada de logs con AWS CloudWatch, con soporte para mensajes JSON estructurados, registro de excepciones y configuración adaptable por entorno.</Description>
+    <PackageTags>logging;cloudwatch;aws;json;exceptions</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/JhoanHurtado/LoggingClient.git</RepositoryUrl>
+    <Authors>Jhoan Hurtado</Authors>
+    <PackageReleaseNotes>Versión 1.0.0:
+    - Implementación inicial de la librería de logging para AWS CloudWatch.
+    - Soporte para envío de logs en formato JSON estructurado.
+    - Registro detallado de excepciones con metadatos clave.
+    - Configuración adaptable por entorno.
+    - Soporte adicional para almacenamiento local de logs.</PackageReleaseNotes>
+    <ProjectUrl>https://github.com/JhoanHurtado/LoggingClient</ProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Nullable>enable</Nullable>
+    <Authors>Jhoan Hurtado</Authors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,5 +33,4 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
-
 </Project>

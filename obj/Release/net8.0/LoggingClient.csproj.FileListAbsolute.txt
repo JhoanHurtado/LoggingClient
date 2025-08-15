@@ -10,3 +10,4 @@
 /Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/refint/LoggingClient.dll
 /Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.pdb
 /Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/ref/LoggingClient.dll
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.sourcelink.json
