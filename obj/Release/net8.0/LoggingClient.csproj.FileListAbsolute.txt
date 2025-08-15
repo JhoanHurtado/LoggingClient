@@ -1,0 +1,12 @@
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/bin/Release/net8.0/LoggingClient.deps.json
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/bin/Release/net8.0/LoggingClient.dll
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/bin/Release/net8.0/LoggingClient.pdb
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.csproj.AssemblyReference.cache
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.GeneratedMSBuildEditorConfig.editorconfig
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.AssemblyInfoInputs.cache
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.AssemblyInfo.cs
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.csproj.CoreCompileInputs.cache
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.dll
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/refint/LoggingClient.dll
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/LoggingClient.pdb
+/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/obj/Release/net8.0/ref/LoggingClient.dll

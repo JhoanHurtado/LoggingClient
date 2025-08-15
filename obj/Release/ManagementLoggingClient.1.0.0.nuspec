@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>ManagementLoggingClient</id>
+    <version>1.0.0</version>
+    <authors>Jhoan Hurtado</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <readme>README.md</readme>
+    <description>Biblioteca en .NET para la gestión centralizada de logs con AWS CloudWatch,
+      que soporta envío de mensajes estructurados en formato JSON,
+      registro de excepciones y eventos de aplicación,
+      y configuración flexible para distintos entornos.</description>
+    <repository type="git" />
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="AWSSDK.CloudWatchLogs" version="4.0.7.4" exclude="Build,Analyzers" />
+        <dependency id="AWSSDK.Core" version="4.0.0.22" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Logging" version="9.0.8" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="9.0.8" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/bin/Release/net8.0/LoggingClient.dll" target="lib/net8.0/LoggingClient.dll" />
+    <file src="/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/README.md" target="README.md" />
+  </files>
+</package>

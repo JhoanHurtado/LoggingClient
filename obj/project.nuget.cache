@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "dgSpecHash": "h5txIkZBFyQ=",
+  "success": true,
+  "projectFilePath": "/Volumes/Content/Proyects/dotNet/LoggingClient/LoggingClient/LoggingClient.csproj",
+  "expectedPackageFiles": [
+    "/Users/jhoanhurtado/.nuget/packages/awssdk.cloudwatchlogs/4.0.7.4/awssdk.cloudwatchlogs.4.0.7.4.nupkg.sha512",
+    "/Users/jhoanhurtado/.nuget/packages/awssdk.core/4.0.0.22/awssdk.core.4.0.0.22.nupkg.sha512",
+    "/Users/jhoanhurtado/.nuget/packages/microsoft.extensions.dependencyinjection/9.0.8/microsoft.extensions.dependencyinjection.9.0.8.nupkg.sha512",
+    "/Users/jhoanhurtado/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/9.0.8/microsoft.extensions.dependencyinjection.abstractions.9.0.8.nupkg.sha512",
+    "/Users/jhoanhurtado/.nuget/packages/microsoft.extensions.logging/9.0.8/microsoft.extensions.logging.9.0.8.nupkg.sha512",
+    "/Users/jhoanhurtado/.nuget/packages/microsoft.extensions.logging.abstractions/9.0.8/microsoft.extensions.logging.abstractions.9.0.8.nupkg.sha512",
+    "/Users/jhoanhurtado/.nuget/packages/microsoft.extensions.options/9.0.8/microsoft.extensions.options.9.0.8.nupkg.sha512",
+    "/Users/jhoanhurtado/.nuget/packages/microsoft.extensions.primitives/9.0.8/microsoft.extensions.primitives.9.0.8.nupkg.sha512",
+    "/Users/jhoanhurtado/.nuget/packages/system.diagnostics.diagnosticsource/9.0.8/system.diagnostics.diagnosticsource.9.0.8.nupkg.sha512"
+  ],
+  "logs": []
+}
