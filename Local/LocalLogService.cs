@@ -1,30 +1,47 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
-using LoggingClient.Interfaces;
+using LoggingClient.Core;
+using LoggingClient.Models;
 
 namespace LoggingClient.Local
 {
-    public class LocalLoggerService : ILoggerService
+    public class LocalLoggerService : LoggerServiceBase
     {
         private readonly string _filePath;
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-        public LocalLoggerService(string filePath)
+        public LocalLoggerService(string filePath = "logs/app.log", bool useJsonFormat = true, string? origin = null)
         {
-            _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+
+            _filePath = filePath;
+            UseJsonFormat = useJsonFormat;
+            if (!string.IsNullOrWhiteSpace(origin))
+                DefaultOrigin = origin;
         }
 
-        public Task LogInfoAsync(string message) => LogAsync($"INFO: {DateTime.UtcNow}: {message}");
-        public Task LogErrorAsync(string message, Exception? ex = null) => LogAsync($"ERROR: {DateTime.UtcNow}: {message} {ex?.ToString()}");
-
-        private Task LogAsync(string message)
+        public override async Task LogAsync(LogEntry entry)
         {
-            var directory = Path.GetDirectoryName(_filePath);
-            if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
+            var formattedMessage = FormatEntry(entry);
 
-            File.AppendAllText(_filePath, message + Environment.NewLine);
-            return Task.CompletedTask;
+            await _semaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var directory = Path.GetDirectoryName(_filePath);
+                if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                await File.AppendAllTextAsync(_filePath, formattedMessage + Environment.NewLine).ConfigureAwait(false);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
     }
 }

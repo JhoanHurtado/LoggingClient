@@ -1,11 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using Amazon;
-using Amazon.CloudWatchLogs;
-using LoggingClient.CloudWatch;
-using LoggingClient.Local;
-using LoggingClient.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace LoggingClient
 {
@@ -13,30 +8,19 @@ namespace LoggingClient
     {
         static async Task Main(string[] args)
         {
-            // Configura AWS CloudWatch client
-            var cloudWatchClient = new AmazonCloudWatchLogsClient(RegionEndpoint.USEast1);
+            // 1. Configura múltiples fuentes en una sola cadena fluida (Consola + Archivo Local + CloudWatch)
+            var logger = LogClientBuilder.Create("OrderService")
+                .AddConsole()
+                .AddLocalFile("logs/test-log.txt")
+                .AddCloudWatch("TestLogGroup", region: RegionEndpoint.USEast1)
+                .Build();
 
-            // Instancia del logger de CloudWatch
-            var cloudWatchLogger = new CloudWatchLoggerService(
-                cloudWatchClient,
-                new Microsoft.Extensions.Logging.LoggerFactory().CreateLogger<CloudWatchLoggerService>(),
-                "TestLogGroup",
-                $"TestLogStream-{DateTime.UtcNow:yyyyMMddHHmmss}"
-            );
+            // 2. Envía logs a TODAS las fuentes simultáneamente con una sola llamada (JSON estructurado automático)
+            await logger.LogInfoAsync("Servicio iniciado correctamente", new { Environment = "Production", Version = "2.0.0" });
+            await logger.LogWarningAsync("Uso de memoria elevado", new { MemoryMb = 850 });
+            await logger.LogErrorAsync("Error procesando el pago", new InvalidOperationException("Fondos insuficientes"), new { OrderId = 1024 });
 
-            await cloudWatchLogger.InitializeAsync();
-
-            // Instancia del logger local
-            var localLogger = new LocalLoggerService("logs/test-log.txt");
-
-            // Prueba de logs
-            await cloudWatchLogger.LogInfoAsync("Este es un mensaje de prueba en CloudWatch.");
-            await cloudWatchLogger.LogErrorAsync("Este es un error de prueba en CloudWatch.", new Exception("Excepción de prueba"));
-
-            await localLogger.LogInfoAsync("Este es un mensaje de prueba en archivo local.");
-            await localLogger.LogErrorAsync("Este es un error de prueba en archivo local.", new Exception("Excepción de prueba"));
-
-            Console.WriteLine("Logs enviados correctamente. Revisa CloudWatch y el archivo local.");
+            Console.WriteLine("Logs enviados correctamente a todas las fuentes configuradas.");
         }
     }
 }

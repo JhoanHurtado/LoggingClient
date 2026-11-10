@@ -1,45 +1,81 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using LoggingClient.Interfaces;
+using LoggingClient.Models;
 using Microsoft.Extensions.Logging;
 
 namespace LoggingClient.CloudWatch
 {
     public class CloudWatchLoggerProvider : ILoggerProvider
     {
-        private readonly CloudWatchLoggerService _cloudWatchLogService;
-        private readonly ConcurrentDictionary<string, CloudWatchLogger> _loggers = new();
+        private readonly ILoggerService _loggerService;
+        private readonly ConcurrentDictionary<string, ProviderLogger> _loggers = new();
 
-        public CloudWatchLoggerProvider(CloudWatchLoggerService cloudWatchLogService)
+        public CloudWatchLoggerProvider(ILoggerService loggerService)
         {
-            _cloudWatchLogService = cloudWatchLogService ?? throw new ArgumentNullException(nameof(cloudWatchLogService));
+            _loggerService = loggerService ?? throw new ArgumentNullException(nameof(loggerService));
         }
 
         public ILogger CreateLogger(string categoryName) =>
-            _loggers.GetOrAdd(categoryName, name => new CloudWatchLogger(name, _cloudWatchLogService));
+            _loggers.GetOrAdd(categoryName, name => new ProviderLogger(name, _loggerService));
 
-        public void Dispose() => _loggers.Clear();
+        public void Dispose()
+        {
+            _loggers.Clear();
+            if (_loggerService is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+            GC.SuppressFinalize(this);
+        }
 
-        private class CloudWatchLogger : ILogger
+        private class ProviderLogger : ILogger
         {
             private readonly string _categoryName;
-            private readonly CloudWatchLoggerService _cloudWatchLogService;
+            private readonly ILoggerService _loggerService;
 
-            public CloudWatchLogger(string categoryName, CloudWatchLoggerService cloudWatchLogService)
+            public ProviderLogger(string categoryName, ILoggerService loggerService)
             {
                 _categoryName = categoryName;
-                _cloudWatchLogService = cloudWatchLogService;
+                _loggerService = loggerService;
             }
 
-            public IDisposable? BeginScope<TState>(TState state) => null;
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
-            public bool IsEnabled(LogLevel logLevel) => true;
+            public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None;
 
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            public void Log<TState>(
+                LogLevel logLevel,
+                EventId eventId,
+                TState state,
+                Exception? exception,
+                Func<TState, Exception?, string> formatter)
             {
+                if (!IsEnabled(logLevel)) return;
+
                 var message = formatter(state, exception);
-                Task.Run(() => _cloudWatchLogService.LogInfoAsync($"[{logLevel}] {_categoryName}: {message}"));
+                var entry = new LogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    Level = MapLevel(logLevel),
+                    Origin = _categoryName,
+                    Message = message,
+                    Exception = ExceptionDetail.FromException(exception)
+                };
+
+                _ = Task.Run(() => _loggerService.LogAsync(entry));
             }
+
+            private static LogLevelType MapLevel(LogLevel logLevel) => logLevel switch
+            {
+                LogLevel.Trace or LogLevel.Debug => LogLevelType.Debug,
+                LogLevel.Information => LogLevelType.Info,
+                LogLevel.Warning => LogLevelType.Warning,
+                LogLevel.Error => LogLevelType.Error,
+                LogLevel.Critical => LogLevelType.Critical,
+                _ => LogLevelType.Info
+            };
         }
     }
 }

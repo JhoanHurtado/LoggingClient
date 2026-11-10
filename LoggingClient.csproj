@@ -1,31 +1,30 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>ManagementLoggingClient</PackageId>
-    <Version>1.0.0</Version>
+    <Version>2.0.0</Version>
     <Authors>Jhoan Hurtado</Authors>
     <Company>JhoanHurtado</Company>
-    <Description>Biblioteca en .NET 8 para la gestión centralizada de logs con AWS CloudWatch, con soporte para mensajes JSON estructurados, registro de excepciones y configuración adaptable por entorno.</Description>
-    <PackageTags>logging;cloudwatch;aws;json;exceptions</PackageTags>
+    <Description>Biblioteca para .NET 8 y .NET 10 para la gestión centralizada y multi-fuente de logs (AWS CloudWatch, Archivos Locales, Consola y proveedores personalizados), con API fluida, inicialización automática y soporte nativo para JSON estructurado.</Description>
+    <PackageTags>logging;cloudwatch;aws;json;exceptions;multilogger;fluent</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/JhoanHurtado/LoggingClient.git</RepositoryUrl>
-    <Authors>Jhoan Hurtado</Authors>
-    <PackageReleaseNotes>Versión 1.0.0:
-    - Implementación inicial de la librería de logging para AWS CloudWatch.
-    - Soporte para envío de logs en formato JSON estructurado.
-    - Registro detallado de excepciones con metadatos clave.
-    - Configuración adaptable por entorno.
-    - Soporte adicional para almacenamiento local de logs.</PackageReleaseNotes>
+    <PackageReleaseNotes>Versión 2.0.0:
+    - Nuevo LogClientBuilder fluido para configurar múltiples fuentes en pocas líneas.
+    - Nuevo CompositeLoggerService para enviar logs simultáneamente a CloudWatch, Archivo Local, Consola, etc.
+    - Inicialización automática (lazy) en CloudWatch (ya no requiere llamar a InitializeAsync ni instanciar AmazonCloudWatchLogsClient manualmente).
+    - Serialización JSON estructurada automática con soporte para metadatos (Data) y niveles Debug, Info, Warning, Error y Critical.
+    - Extensiones de inyección de dependencias (AddLoggingClient).
+    - Fachada estática LogClient para uso rápido global.</PackageReleaseNotes>
     <ProjectUrl>https://github.com/JhoanHurtado/LoggingClient</ProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Nullable>enable</Nullable>
-    <Authors>Jhoan Hurtado</Authors>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.CloudWatchLogs" Version="4.0.7.4" />
-    <PackageReference Include="AWSSDK.Core" Version="4.0.0.22" />
+    <PackageReference Include="AWSSDK.CloudWatchLogs" Version="4.0.17.2" />
+    <PackageReference Include="AWSSDK.Core" Version="4.0.3.26" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
   </ItemGroup>

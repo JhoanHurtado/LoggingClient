@@ -1,33 +1,36 @@
-# LoggingClient
+# LoggingClient (`ManagementLoggingClient`)
 
-**LoggingClient** es una librería en .NET 8 que permite enviar logs tanto a **AWS CloudWatch** como a archivos locales de texto.  
-Soporta formato plano o JSON, lo que facilita la integración con **CloudWatch Logs Insights** para consultas avanzadas.
+**LoggingClient** es una librería en **.NET 8 y .NET 10 (LTS)** diseñada para que el registro de logs sea **extremadamente sencillo**, permitiendo enviar eventos a **múltiples fuentes simultáneamente** (**AWS CloudWatch**, **archivos locales**, **consola** o **fuentes personalizadas**) con una sola llamada y el mínimo código posible.
 
-## 🚀 Características
-
-- Registro de logs en **AWS CloudWatch Logs**.
-- Registro de logs en **archivos locales**.
-- Formato **plano** o **JSON estructurado**.
-- Soporte para niveles de log (`INFO`, `ERROR`).
-- Incluye información de **timestamp**, **origen** y **detalles de excepción**.
-- Integración sencilla con `ILogger` de .NET.
+Formatea automáticamente tus mensajes, metadatos y excepciones en **JSON estructurado** listo para **CloudWatch Logs Insights** (o texto plano si lo prefieres), y se encarga de inicializar grupos/streams de CloudWatch de forma automática (*lazy initialization*).
 
 ---
 
-## 📦 Instalación
+## 🚀 Características Principales
 
-1. Agrega las referencias necesarias en tu `.csproj`:
+- **Multi-fuente con 1 sola llamada:** Envía el mismo log en paralelo a Consola, Archivo Local y AWS CloudWatch usando `LogClientBuilder`.
+- **Cero configuración repetitiva (*Zero Boilerplate*):** Ya no necesitas instanciar `AmazonCloudWatchLogsClient`, ni `LoggerFactory`, ni llamar a `InitializeAsync()` manualmente, ni serializar JSONs a mano.
+- **JSON estructurado automático:** Incluye `timestamp`, `level`, `origin`, `message`, objeto `data` arbitrario y desglose detallado de `exception`.
+- **Niveles completos:** `Debug`, `Info`, `Warning`, `Error` y `Critical`.
+- **Inyección de Dependencias (DI):** Integración en 1 línea con `IServiceCollection` e `ILoggingBuilder` de .NET.
+- **Thread-Safe y Resiliente:** Escritura segura en archivos concurrentes (`SemaphoreSlim`), aislamiento de fallos entre fuentes y recuperación automática de `SequenceToken` en CloudWatch.
+
+---
+
+## 📦 Instalación y Requisitos
+
+1. Instala el paquete NuGet `ManagementLoggingClient` o agrega las referencias en tu `.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="AWSSDK.CloudWatchLogs" Version="4.0.7.4" />
-  <PackageReference Include="AWSSDK.Core" Version="4.0.0.22" />
+  <PackageReference Include="AWSSDK.CloudWatchLogs" Version="4.0.17.2" />
+  <PackageReference Include="AWSSDK.Core" Version="4.0.3.26" />
   <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
   <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
 </ItemGroup>
 ```
 
-2. Configura tus credenciales de AWS en el archivo `~/.aws/credentials` o usando variables de entorno:
+2. Si usas **AWS CloudWatch**, configura tus credenciales en `~/.aws/credentials`, variables de entorno (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`) o pásalas directamente en `.AddCloudWatch(...)`:
 
 ```ini
 [default]
@@ -38,135 +41,162 @@ region=us-east-1
 
 ---
 
-## ⚙️ Configuración
+## ⚡ Guía de Uso Rápido
 
-### 1️⃣ Logger a AWS CloudWatch
+### 1️⃣ Usando el Builder Fluido (`LogClientBuilder`)
+
+Configura todas las fuentes que necesites encadenando métodos y registra en todas a la vez:
 
 ```csharp
 using Amazon;
-using Amazon.CloudWatchLogs;
-using Microsoft.Extensions.Logging;
-using LoggingClient.CloudWatch;
+using LoggingClient;
 
-var client = new AmazonCloudWatchLogsClient(RegionEndpoint.USEast1);
+var logger = LogClientBuilder.Create("PaymentService")
+    .AddConsole()                                                    // Salida en consola con colores
+    .AddLocalFile("logs/payments.log")                               // Archivo local (crea la carpeta si no existe)
+    .AddCloudWatch("ProductionLogs", region: RegionEndpoint.USEast1) // AWS CloudWatch (auto-inicializado)
+    .Build();
 
-var cloudWatchLoggerService = new CloudWatchLoggerService(
-    client,
-    LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<CloudWatchLoggerService>(),
-    "MiLogGroup",
-    "MiLogStream"
-);
-
-await cloudWatchLoggerService.InitializeAsync();
-await cloudWatchLoggerService.LogInfoAsync("Servicio iniciado correctamente");
-await cloudWatchLoggerService.LogErrorAsync("Error procesando solicitud", new Exception("Detalles del error"));
+// Envía a Consola, Archivo y CloudWatch simultáneamente:
+await logger.LogDebugAsync("Iniciando validación de pago");
+await logger.LogInfoAsync("Pago procesado", new { OrderId = 9841, Amount = 150.00 });
+await logger.LogWarningAsync("Latencia alta en pasarela", new { ElapsedMs = 3200 });
+await logger.LogErrorAsync("Fallo al cobrar tarjeta", ex, new { CustomerId = "CUST-01" });
+await logger.LogCriticalAsync("Servicio de pagos no disponible", ex);
 ```
 
----
+### 2️⃣ Uso Estático Global (`LogClient`)
 
-### 2️⃣ Logger local
+Si no quieres pasar instancias por constructor, configúralo una sola vez al iniciar tu aplicación y úsalo desde cualquier clase:
 
 ```csharp
-using LoggingClient.Local;
+using LoggingClient;
 
-var localLogger = new LocalLoggerService("logs/test-log.txt");
+// 1. Al inicio de tu aplicación (Program.cs):
+LogClient.Configure(b => b
+    .WithOrigin("AuthService")
+    .AddConsole()
+    .AddLocalFile("logs/auth.log")
+    .AddCloudWatch("AuthLogGroup"));
 
-await localLogger.LogInfoAsync("Aplicación iniciada");
-await localLogger.LogErrorAsync("Fallo en la operación X", new Exception("Algo salió mal"));
+// 2. En cualquier parte de tu código:
+await LogClient.InfoAsync("Usuario autenticado", new { UserId = 42 });
+await LogClient.ErrorAsync("Token inválido", ex);
 ```
 
----
+### 3️⃣ Con Inyección de Dependencias en ASP.NET Core / Worker Services
 
-## 📄 Ejemplo de uso en JSON
-
-Para guardar los logs con formato JSON estructurado:
+Registra `ILoggerService` (y conéctalo automáticamente al `ILogger<T>` estándar de .NET) en tu `Program.cs`:
 
 ```csharp
-var logJson = System.Text.Json.JsonSerializer.Serialize(new
+using Amazon;
+using LoggingClient;
+using LoggingClient.Interfaces;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddLoggingClient(log => log
+    .WithOrigin("WebApi")
+    .AddConsole()
+    .AddLocalFile("logs/api.log")
+    .AddCloudWatch("ApiLogGroup", region: RegionEndpoint.USEast1));
+
+var app = builder.Build();
+
+app.MapGet("/ping", async (ILoggerService logger) =>
 {
-    Timestamp = DateTime.UtcNow.ToString("o"),
-    Level = "INFO",
-    Origin = "NotificationService",
-    Message = "Proceso completado",
-    Exception = (string)null
+    await logger.LogInfoAsync("Ping recibido", new { Ip = "127.0.0.1" });
+    return Results.Ok("Pong");
 });
 
-await cloudWatchLoggerService.LogInfoAsync(logJson);
+app.Run();
 ```
 
-Ejemplo de log resultante en CloudWatch:
+### 4️⃣ Uso Individual por Proveedor (Opcional)
+
+También puedes instanciar cada servicio directamente de forma simplificada:
+
+```csharp
+using Amazon;
+using LoggingClient.CloudWatch;
+using LoggingClient.Local;
+using LoggingClient.ConsoleLog;
+
+// Archivo local
+var localLogger = new LocalLoggerService("logs/local.log");
+await localLogger.LogInfoAsync("Mensaje en archivo local");
+
+// AWS CloudWatch (sin necesidad de crear AmazonCloudWatchLogsClient ni llamar a InitializeAsync)
+using var cwLogger = new CloudWatchLoggerService("MiLogGroup", region: RegionEndpoint.USEast1);
+await cwLogger.LogInfoAsync("Mensaje directo a CloudWatch", new { Env = "Prod" });
+
+// Consola
+var consoleLogger = new ConsoleLoggerService(useJsonFormat: false, useColors: true);
+await consoleLogger.LogWarningAsync("Advertencia en consola");
+```
+
+---
+
+## 📄 Formato de Salida (JSON vs. Texto Plano)
+
+### Formato JSON Estructurado (Por defecto en Archivo y CloudWatch)
+Genera automáticamente un JSON compacto en una sola línea (ideal para **CloudWatch Logs Insights**):
+
 ```json
-{"Timestamp":"2025-08-14T15:30:00Z","Level":"INFO","Origin":"NotificationService","Message":"Proceso completado","Exception":null}
+{"timestamp":"2026-11-09T23:30:00.1234567Z","level":"Error","origin":"PaymentService","message":"Fallo al cobrar tarjeta","data":{"customerId":"CUST-01"},"exception":{"type":"System.InvalidOperationException","message":"Fondos insuficientes","stackTrace":"..."}}
 ```
 
-> **Nota:** CloudWatch almacena el JSON como texto plano, pero si cada línea es un JSON válido, podrás consultarlo fácilmente con **Logs Insights**.
+### Formato Texto Plano
+Si prefieres texto plano globalmente o en un proveedor específico, usa `.UseJson(false)` o pasa `useJsonFormat: false`:
+
+```text
+[2026-11-09 23:30:00.123 UTC] [ERROR] [PaymentService] Fallo al cobrar tarjeta | Data: {"customerId":"CUST-01"} | Ex: System.InvalidOperationException: Fondos insuficientes
+```
+
+---
+
+## 🔌 Crear una Fuente Personalizada
+
+Agregar un nuevo destino de logs (Base de Datos, Seq, Slack, Webhook, etc.) es tan simple como heredar de `LoggerServiceBase` e implementar `LogAsync`:
+
+```csharp
+using System.Threading.Tasks;
+using LoggingClient.Core;
+using LoggingClient.Models;
+
+public class WebhookLoggerService : LoggerServiceBase
+{
+    public override async Task LogAsync(LogEntry entry)
+    {
+        string payload = FormatEntry(entry); // Devuelve el JSON o texto formateado
+        // Enviar payload por HttpClient...
+        await Task.CompletedTask;
+    }
+}
+
+// Agrégalo al builder:
+var logger = LogClientBuilder.Create("MyService")
+    .AddConsole()
+    .AddCustom(new WebhookLoggerService())
+    .Build();
+```
 
 ---
 
 ## 🔍 Consultas en CloudWatch Logs Insights
 
-Ejemplo de consulta para filtrar errores:
+Gracias al formato JSON automático, puedes consultar cualquier propiedad o metadato directamente en AWS:
+
+**Filtrar errores por servicio y mostrar datos adjuntos:**
 ```sql
-fields @timestamp, @message
-| filter Level = "ERROR"
+fields @timestamp, origin, message, data.orderId, exception.type, exception.message
+| filter level = "Error" and origin = "PaymentService"
 | sort @timestamp desc
 ```
 
-Ejemplo para buscar por servicio de origen:
-```sql
-fields @timestamp, @message
-| filter Origin = "NotificationService"
-```
-
 ---
 
-## 🛠 Ejemplo de proyecto de prueba (`Program.cs`)
-
-```csharp
-using Amazon;
-using Amazon.CloudWatchLogs;
-using Microsoft.Extensions.Logging;
-using LoggingClient.CloudWatch;
-using LoggingClient.Local;
-
-class Program
-{
-    static async Task Main(string[] args)
-    {
-        // Logger local
-        var localLogger = new LocalLoggerService("logs/test-log.txt");
-        await localLogger.LogInfoAsync("Iniciando prueba local");
-
-        // Logger AWS CloudWatch
-        var client = new AmazonCloudWatchLogsClient(RegionEndpoint.USEast1);
-        var cloudLogger = new CloudWatchLoggerService(
-            client,
-            LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<CloudWatchLoggerService>(),
-            "TestLogGroup",
-            "TestLogStream"
-        );
-
-        await cloudLogger.InitializeAsync();
-
-        var logJson = System.Text.Json.JsonSerializer.Serialize(new
-        {
-            Timestamp = DateTime.UtcNow.ToString("o"),
-            Level = "INFO",
-            Origin = "TestApp",
-            Message = "Prueba de log JSON",
-            Exception = (string)null
-        });
-
-        await cloudLogger.LogInfoAsync(logJson);
-    }
-}
-```
-
----
-
-## 🏗 Compilación en Release
-
-Para compilar en modo release:
+## 🏗 Compilación y Empaquetado NuGet
 
 ```bash
 dotnet clean
@@ -174,18 +204,4 @@ dotnet restore
 dotnet build -c Release
 ```
 
-El binario se generará en:
-```
-bin/Release/net8.0/
-```
-
----
-
-## 📌 Buenas prácticas
-
-- Mantén el nombre de `LogGroup` y `LogStream` consistentes para un servicio.
-- Usa JSON en una sola línea para que CloudWatch pueda parsearlo.
-- No envíes objetos muy grandes; CloudWatch tiene límites de tamaño (256 KB por evento).
-- Usa `await` siempre que sea posible para evitar pérdida de logs.
-
----
+El binario y el paquete NuGet (`.nupkg`) se generarán en `bin/Release/`.
