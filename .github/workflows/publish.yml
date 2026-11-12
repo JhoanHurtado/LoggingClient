@@ -1,13 +1,22 @@
-name: Publish ManagementLoggingClient to NuGet
+name: Publish ManagementLoggingClient
 
 on:
   push:
     tags:
       - 'v*'   # v2.0.1, v2.1.0, v3.0.0-beta.1 ...
+  workflow_dispatch:   # Manual re-run for an existing tag
+    inputs:
+      tag:
+        description: 'Existing tag to publish (e.g. v2.0.1)'
+        required: true
 
 permissions:
-  contents: write   # Required to create the GitHub Release
-  id-token: write   # Required for NuGet Trusted Publishing (OIDC)
+  contents: write   # Create the GitHub Release
+  packages: write   # Push to GitHub Packages
+  id-token: write   # NuGet Trusted Publishing (OIDC)
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   publish:
@@ -15,6 +24,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
 
       - name: Setup .NET SDKs (8 + 10, multi-target)
         uses: actions/setup-dotnet@v4
@@ -25,7 +36,7 @@ jobs:
 
       - name: Get version from tag
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        run: echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Restore, Build and Pack
         run: |
@@ -39,17 +50,24 @@ jobs:
         with:
           user: ${{ secrets.NUGET_USER }}   # nuget.org profile name, NOT email
 
-      - name: Publish package to NuGet
+      - name: Publish to nuget.org
         run: |
           dotnet nuget push ./artifacts/*.nupkg \
             --api-key ${{ steps.nuget_login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
+      - name: Publish to GitHub Packages
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json \
+            --skip-duplicate
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.TAG }}
           name: ManagementLoggingClient ${{ steps.version.outputs.VERSION }}
           generate_release_notes: true
           prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
