@@ -10,6 +10,7 @@ namespace LoggingClient.Core
     {
         public string DefaultOrigin { get; set; } = AppDomain.CurrentDomain.FriendlyName;
         public bool UseJsonFormat { get; set; } = true;
+        public TimeZoneInfo? TimeZone { get; set; }
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -21,6 +22,11 @@ namespace LoggingClient.Core
 
         protected virtual string FormatEntry(LogEntry entry)
         {
+            if (TimeZone != null)
+            {
+                entry.LocalTime = LoggingClient.Utils.TimeZoneHelper.FormatLocalTime(entry.Timestamp, TimeZone);
+            }
+
             if (UseJsonFormat)
             {
                 // Si el mensaje ya es un objeto o arreglo JSON válido serializado previamente, se envía directo sin doble escapado
@@ -32,6 +38,11 @@ namespace LoggingClient.Core
                      (trimmed.StartsWith('[') && trimmed.EndsWith(']'))) &&
                     IsValidJson(trimmed))
                 {
+                    if (trimmed.StartsWith('{') && !trimmed.Contains("localTime", StringComparison.OrdinalIgnoreCase) && !trimmed.Contains("colombiaTime", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var timeJson = $"\"localTime\":\"{entry.LocalTime}\",\"colombiaTime\":\"{entry.ColombiaTime}\",";
+                        return "{" + timeJson + trimmed.Substring(1);
+                    }
                     return trimmed;
                 }
 
@@ -40,7 +51,7 @@ namespace LoggingClient.Core
 
             var dataPart = entry.Data != null ? $" | Data: {JsonSerializer.Serialize(entry.Data, JsonOptions)}" : string.Empty;
             var exPart = entry.Exception != null ? $" | Ex: {entry.Exception.Type}: {entry.Exception.Message} {entry.Exception.StackTrace}" : string.Empty;
-            return $"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff} UTC] [{entry.Level.ToString().ToUpperInvariant()}] [{entry.Origin}] {entry.Message}{dataPart}{exPart}";
+            return $"[{entry.LocalTime}] [{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff} UTC] [{entry.Level.ToString().ToUpperInvariant()}] [{entry.Origin}] {entry.Message}{dataPart}{exPart}";
         }
 
         private static bool IsValidJson(string input)

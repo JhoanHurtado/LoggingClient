@@ -107,8 +107,15 @@ namespace LoggingClient.CloudWatch
 
                 if (groups.LogGroups == null || !groups.LogGroups.Any(g => g.LogGroupName == _logGroupName))
                 {
-                    await _client.CreateLogGroupAsync(
-                        new CreateLogGroupRequest { LogGroupName = _logGroupName }).ConfigureAwait(false);
+                    try
+                    {
+                        await _client.CreateLogGroupAsync(
+                            new CreateLogGroupRequest { LogGroupName = _logGroupName }).ConfigureAwait(false);
+                    }
+                    catch (ResourceAlreadyExistsException)
+                    {
+                        // Grupo creado concurrentemente por otra instancia
+                    }
                 }
 
                 var streams = await _client.DescribeLogStreamsAsync(
@@ -121,10 +128,17 @@ namespace LoggingClient.CloudWatch
                 var existingStream = streams.LogStreams?.FirstOrDefault(s => s.LogStreamName == _logStreamName);
                 if (existingStream == null)
                 {
-                    await _client.CreateLogStreamAsync(
-                        new CreateLogStreamRequest { LogGroupName = _logGroupName, LogStreamName = _logStreamName })
-                        .ConfigureAwait(false);
-                    _sequenceToken = null;
+                    try
+                    {
+                        await _client.CreateLogStreamAsync(
+                            new CreateLogStreamRequest { LogGroupName = _logGroupName, LogStreamName = _logStreamName })
+                            .ConfigureAwait(false);
+                        _sequenceToken = null;
+                    }
+                    catch (ResourceAlreadyExistsException)
+                    {
+                        // Stream creado concurrentemente por otra instancia
+                    }
                 }
                 else
                 {

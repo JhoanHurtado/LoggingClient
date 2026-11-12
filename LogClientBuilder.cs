@@ -64,6 +64,24 @@ namespace LoggingClient
         }
 
         /// <summary>
+        /// Configura la zona horaria para los timestamps locales de los logs (por defecto Colombia, America/Bogota / UTC-5).
+        /// </summary>
+        public LogClientBuilder WithTimeZone(string timeZoneId)
+        {
+            LoggingClient.Utils.TimeZoneHelper.SetTimeZone(timeZoneId);
+            return this;
+        }
+
+        /// <summary>
+        /// Configura directamente el TimeZoneInfo para los timestamps locales.
+        /// </summary>
+        public LogClientBuilder WithTimeZone(TimeZoneInfo timeZone)
+        {
+            LoggingClient.Utils.TimeZoneHelper.SetTimeZone(timeZone);
+            return this;
+        }
+
+        /// <summary>
         /// Agrega salida de logs por consola.
         /// </summary>
         public LogClientBuilder AddConsole(bool? useJsonFormat = null, bool useColors = true)

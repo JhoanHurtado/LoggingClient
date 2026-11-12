@@ -17,6 +17,21 @@ namespace LoggingClient.Models
     {
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
+        /// <summary>
+        /// Hora local de generación según la zona horaria parametrizada (por defecto Colombia UTC-5).
+        /// Permite visualizar inmediatamente en CloudWatch la hora local sin desfases por la zona del servidor.
+        /// </summary>
+        public string LocalTime { get; set; } = LoggingClient.Utils.TimeZoneHelper.FormatLocalTime();
+
+        /// <summary>
+        /// Alias de compatibilidad hacia atrás para ColombiaTime.
+        /// </summary>
+        public string ColombiaTime
+        {
+            get => LocalTime;
+            set => LocalTime = value;
+        }
+
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public LogLevelType Level { get; set; } = LogLevelType.Info;
 
