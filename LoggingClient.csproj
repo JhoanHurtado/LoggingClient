@@ -3,14 +3,14 @@
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>ManagementLoggingClient</PackageId>
-    <Version>2.1.1</Version>
+    <Version>2.0.1</Version>
     <Authors>Jhoan Hurtado</Authors>
     <Company>JhoanHurtado</Company>
     <Description>Biblioteca para .NET 8 y .NET 10 para la gestión centralizada y multi-fuente de logs (AWS CloudWatch, Archivos Locales, Consola y proveedores personalizados), con API fluida, inicialización automática, timestamp con zona horaria parametrizable (por defecto Colombia UTC-5) y soporte nativo para JSON estructurado.</Description>
     <PackageTags>logging;cloudwatch;aws;json;exceptions;multilogger;fluent;colombia-time;timezone</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/JhoanHurtado/LoggingClient.git</RepositoryUrl>
-    <PackageReleaseNotes>Versión 2.1.1:
+    <PackageReleaseNotes>Versión 2.0.1:
     - Zona horaria de generación completamente parametrizable vía TimeZoneHelper.SetTimeZone o LogClientBuilder.WithTimeZone(id), usando hora de Colombia (America/Bogota, UTC-5) como valor por defecto.
     - Soporte automático para inyectar localTime y colombiaTime en JSON y texto plano.
     - Manejo resiliente de ResourceAlreadyExistsException en CloudWatch ante concurrencia.</PackageReleaseNotes>
