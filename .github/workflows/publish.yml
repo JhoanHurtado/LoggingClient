@@ -6,7 +6,7 @@ on:
       - 'v*'   # v2.0.1, v2.1.0, v3.0.0-beta.1 ...
 
 permissions:
-  contents: read
+  contents: write   # Required to create the GitHub Release
   id-token: write   # Required for NuGet Trusted Publishing (OIDC)
 
 jobs:
@@ -43,10 +43,14 @@ jobs:
         run: |
           dotnet nuget push ./artifacts/*.nupkg \
             --api-key ${{ steps.nuget_login.outputs.NUGET_API_KEY }} \
-            --source https://api.nuget.org/v3/index.json
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
 
-      - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: nupkg
-          path: ./artifacts/*.nupkg
+          tag_name: ${{ github.ref_name }}
+          name: ManagementLoggingClient ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
+          prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
+          files: ./artifacts/*.nupkg

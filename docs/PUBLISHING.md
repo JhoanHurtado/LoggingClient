@@ -44,7 +44,16 @@ Al subir el tag, GitHub Actions ejecuta:
 1. `dotnet restore` / `dotnet build -c Release`
 2. `dotnet pack -c Release -p:Version=<versión del tag> -o ./artifacts`
 3. `NuGet/login@v1` → intercambia el token OIDC por una API key temporal (1 hora)
-4. `dotnet nuget push ./artifacts/*.nupkg`
+4. `dotnet nuget push ./artifacts/*.nupkg --skip-duplicate` (si la versión ya existe en NuGet, no falla)
+5. Crea un **GitHub Release** con el `.nupkg` adjunto y notas generadas automáticamente (pre-release si la versión tiene sufijo, p.ej. `-beta.1`)
+
+### Crear un Release manualmente (sin pipeline)
+
+```powershell
+dotnet pack -c Release -p:Version=2.0.1 -o ./artifacts
+gh release create v2.0.1 ./artifacts/ManagementLoggingClient.2.0.1.nupkg `
+  --title "ManagementLoggingClient 2.0.1" --generate-notes
+```
 
 ## 4. Configuración inicial (una sola vez)
 
